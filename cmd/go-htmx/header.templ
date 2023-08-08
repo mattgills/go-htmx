@@ -1,0 +1,25 @@
+package main
+
+import "time"
+
+var greeting = "Welcome!"
+
+templ headerTemplate(name string) {
+    <header data-testid="headerTemplate">
+        <h1>{ name }</h1>
+        <h2>{ greeting }</h2>
+    </header>
+}
+
+templ button(text string) {
+    <script>alert("howdy")</script>
+    <button class="button">{ text }</button>
+}
+
+templ timeComponent(d time.Time) {
+    <div>{ d.String() }</div>
+}
+
+templ notFoundComponent() {
+    <div>404 - Not found</div>
+}
