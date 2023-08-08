@@ -2,36 +2,47 @@ package main
 
 import (
 	"fmt"
+	"log"
 	"net/http"
-	"time"
-
-	"github.com/a-h/templ"
 )
 
-type NowHandler struct {
-	Now func() time.Time
+type GlobalState struct {
+	Count int
 }
 
-func NewNowHandler(now func() time.Time) NowHandler {
-	return NowHandler{Now: now}
+var global GlobalState
+
+func getHandler(w http.ResponseWriter, r *http.Request) {
+	component := page(global.Count, 0)
+	component.Render(r.Context(), w)
 }
 
-func (nh NowHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
-	timeComponent(nh.Now()).Render(r.Context(), w)
+func postHandler(w http.ResponseWriter, r *http.Request) {
+	// Update state
+	r.ParseForm()
+
+	// Check to see if the global buttonw as pressed
+	if r.Form.Has("global") {
+		global.Count++
+	}
+
+	// TODO: Update session
+
+	// Display the form
+	getHandler(w, r)
 }
 
 func main() {
-	component := hello("John")
-	header_component := headerTemplate("Paul")
-	b := button("Click Me!")
-	nf := notFoundComponent()
-
-	http.Handle("/", templ.Handler(component))
-	http.Handle("/header", templ.Handler(header_component))
-	http.Handle("/button", templ.Handler(b))
-	http.Handle("/time", NewNowHandler(time.Now))
-	http.Handle("/404", templ.Handler(nf, templ.WithStatus(http.StatusNotFound)))
+	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodPost {
+			postHandler(w, r)
+			return
+		}
+		getHandler(w, r)
+	})
 
 	fmt.Println("Listening on localhost:3000")
-	http.ListenAndServe("localhost:3000", nil)
+	if err := http.ListenAndServe("localhost:3000", nil); err != nil {
+		log.Printf("error listening: %v", err)
+	}
 }
